@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glen — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --danger: #ff4466;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Edit mode banner */
+  #edit-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--accent);
+    color: #000;
+    text-align: center;
+    padding: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 1000;
+    letter-spacing: 1px;
+    display: none;
+  }
+
+  #edit-banner.active { display: block; }
+
+  /* Toolbar */
+  #toolbar {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 999;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .tool-btn {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  #toggle-edit {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0,255,136,0.4);
+  }
+
+  #toggle-edit:hover { box-shadow: 0 0 30px rgba(0,255,136,0.7); }
+  #toggle-edit.editing { background: var(--danger); color: #fff; box-shadow: 0 0 20px rgba(255,68,102,0.4); }
+
+  #save-btn {
+    background: var(--accent2);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(0,136,255,0.4);
+    display: none;
+  }
+  #save-btn.visible { display: block; }
+  #save-btn:hover { box-shadow: 0 0 30px rgba(0,136,255,0.7); }
+
+  /* Grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 20px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    background: linear-gradient(var(--bg), transparent);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* Sections */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 120px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 160px;
+  }
+
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .hero-name {
+    font-size: clamp(52px, 8vw, 100px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+  }
+
+  .hero-name .highlight {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(0,255,136,0.5); }
+
+  .btn-secondary {
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Section headings */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 48px;
+    line-height: 1.1;
+  }
+
+  /* About */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .about-text {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .about-text p + p { margin-top: 16px; }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+  }
+
+  .stat-number {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Skills */
+  #skills { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); max-width: 100%; padding: 100px 60px; }
+  #skills > * { max-width: 1100px; margin-left: auto; margin-right: auto; }
+  #skills .section-label, #skills .section-title { max-width: 1100px; margin-left: auto; margin-right: auto; }
+
+  .skills-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+
+  .skill-category {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 32px;
+    transition: border-color 0.3s;
+  }
+
+  .skill-category:hover { border-color: var(--accent); }
+
+  .skill-cat-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .skill-tag {
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .skill-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Projects */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .project-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,255,136,0.03), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .project-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .project-card:hover::after { opacity: 1; }
+
+  .project-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+
+  .project-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+
+  .project-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .project-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    background: rgba(0,136,255,0.08);
+    border: 1px solid rgba(0,136,255,0.2);
+    padding: 4px 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Education */
+  .edu-timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .edu-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 1px;
+    background: linear-gradient(var(--accent), var(--accent2), transparent);
+  }
+
+  .edu-item {
+    position: relative;
+    margin-bottom: 48px;
+  }
+
+  .edu-item::before {
+    content: '';
+    position: absolute;
+    left: -36px; top: 8px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .edu-year {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .edu-degree {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+
+  .edu-school {
+    font-size: 15px;
+    color: var(--accent2);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .edu-detail {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* Contact */
+  #contact { background: var(--surface); border-top: 1px solid var(--border); max-width: 100%; padding: 100px 60px; }
+
+  .contact-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .contact-tagline {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+  }
+
+  .contact-sub {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .contact-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .contact-link-icon {
+    width: 24px;
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Editable styles */
+  body.edit-mode [contenteditable="true"] {
+    outline: 1px dashed rgba(0,255,136,0.4);
+    background: rgba(0,255,136,0.03);
+    cursor: text;
+    transition: outline 0.2s;
+    min-width: 20px;
+    display: inline-block;
+  }
+
+  body.edit-mode [contenteditable="true"]:focus {
+    outline: 1px solid var(--accent);
+    background: rgba(0,255,136,0.06);
+  }
+
+  body.edit-mode .skill-list,
+  body.edit-mode .project-tags {
+    outline: 1px dashed rgba(0,136,255,0.3);
+    background: rgba(0,136,255,0.02);
+    padding: 4px;
+    cursor: text;
+  }
+
+  .add-btn {
+    display: none;
+    background: rgba(0,255,136,0.1);
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  body.edit-mode .add-btn { display: inline-block; }
+  .add-btn:hover { background: rgba(0,255,136,0.2); }
+
+  .del-btn {
+    display: none;
+    background: rgba(255,68,102,0.1);
+    border: 1px dashed var(--danger);
+    color: var(--danger);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  body.edit-mode .del-btn { display: inline-block; }
+
+  .add-project-btn, .add-edu-btn {
+    display: none;
+    margin-top: 24px;
+    padding: 14px 28px;
+    background: rgba(0,255,136,0.08);
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  body.edit-mode .add-project-btn,
+  body.edit-mode .add-edu-btn { display: block; }
+  .add-project-btn:hover, .add-edu-btn:hover { background: rgba(0,255,136,0.15); }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 60px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .scroll-line {
+    width: 40px;
+    height: 1px;
+    background: var(--muted);
+    animation: scrollAnim 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollAnim {
+    0%, 100% { width: 20px; opacity: 0.3; }
+    50% { width: 50px; opacity: 1; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    nav { padding: 20px 24px; }
+    section { padding: 80px 24px; }
+    #skills, #contact { padding: 80px 24px; }
+    .about-grid, .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+    .hero-name { font-size: 48px; }
+    #toolbar { bottom: 16px; right: 16px; }
+  }
+
+  /* Fade in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-tag, .hero-name, .hero-desc, .hero-ctas, .scroll-indicator {
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-name { animation-delay: 0.1s; }
+  .hero-desc { animation-delay: 0.2s; }
+  .hero-ctas { animation-delay: 0.3s; }
+  .scroll-indicator { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+
+<div id="edit-banner">✏ EDIT MODE — Click any text to edit it directly</div>
+
+<nav>
+  <div class="nav-logo" contenteditable="false">GL/</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <p class="hero-tag" contenteditable="false">BSc Computing · Cybersecurity</p>
+  <h1 class="hero-name">
+    <span contenteditable="false">Glen</span><br>
+    <span class="highlight" contenteditable="false">Akhil</span>
+  </h1>
+  <p class="hero-desc" contenteditable="false">Final-year Computing student at Northumbria University specialising in cybersecurity — building risk assessment tools, forensic systems, and secure architectures.</p>
+  <div class="hero-ctas">
+    <a href="#projects" class="btn-primary">View Projects</a>
+    <a href="#contact" class="btn-secondary">Get In Touch</a>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    SCROLL
+  </div>
+</section>
+
+<!-- About -->
+<section id="about">
+  <p class="section-label">About Me</p>
+  <h2 class="section-title">Who I Am</h2>
+  <div class="about-grid">
+    <div class="about-text">
+      <p contenteditable="false">I'm a final-year BSc Computing student at Northumbria University (QAHE London Campus) with a deep focus on cybersecurity — from penetration testing and digital forensics to governance frameworks and secure tool development.</p>
+      <p contenteditable="false">I'm passionate about building practical security solutions and understanding the intersection of technology, policy, and risk. I have hands-on experience in ISO 27001, UK GDPR, and ethical hacking environments.</p>
+      <p contenteditable="false">Outside of tech, I enjoy creative writing and world-building — which helps me think systemically and communicate complex ideas clearly.</p>
+    </div>
+    <div class="about-stats">
+      <div class="stat-card">
+        <div class="stat-number" contenteditable="false">3+</div>
+        <div class="stat-label" contenteditable="false">Years Studying</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" contenteditable="false">10+</div>
+        <div class="stat-label" contenteditable="false">Projects Built</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" contenteditable="false">BSc</div>
+        <div class="stat-label" contenteditable="false">Computing Degree</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" contenteditable="false">2025</div>
+        <div class="stat-label" contenteditable="false">Graduating</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills">
+  <p class="section-label" style="max-width:1100px;margin:0 auto 16px;">Expertise</p>
+  <h2 class="section-title" style="max-width:1100px;margin:0 auto 48px;">Skills &amp; Tools</h2>
+  <div class="skills-grid">
+
+    <div class="skill-category">
+      <div class="skill-cat-title" contenteditable="false">Cybersecurity</div>
+      <div class="skill-list" id="skill-list-1">
+        <span class="skill-tag" contenteditable="false">Penetration Testing<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Digital Forensics<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">ISO 27001<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">UK GDPR<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">NIST CSF<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Risk Assessment<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+      <button class="add-btn" onclick="addSkill('skill-list-1')">+ Add Skill</button>
+    </div>
+
+    <div class="skill-category">
+      <div class="skill-cat-title" contenteditable="false">Development</div>
+      <div class="skill-list" id="skill-list-2">
+        <span class="skill-tag" contenteditable="false">HTML5 / CSS3<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">JavaScript<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Python<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">GitHub Pages<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Kali Linux<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+      <button class="add-btn" onclick="addSkill('skill-list-2')">+ Add Skill</button>
+    </div>
+
+    <div class="skill-category">
+      <div class="skill-cat-title" contenteditable="false">Tools & Platforms</div>
+      <div class="skill-list" id="skill-list-3">
+        <span class="skill-tag" contenteditable="false">Metasploit<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Wireshark<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">VirtualBox<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">Autopsy<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">draw.io<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="skill-tag" contenteditable="false">VS Code<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+      <button class="add-btn" onclick="addSkill('skill-list-3')">+ Add Skill</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects">
+  <p class="section-label">Work</p>
+  <h2 class="section-title">Featured Projects</h2>
+  <div class="projects-grid" id="projects-grid">
+
+    <div class="project-card">
+      <div class="project-number" contenteditable="false">01</div>
+      <div class="project-title" contenteditable="false">ISO 27001 Risk Assessment Tool</div>
+      <div class="project-desc" contenteditable="false">A web-based risk assessment tool covering all 93 Annex A controls across four categories. Built with HTML5, CSS3, and JavaScript using localStorage for persistent data.</div>
+      <div class="project-tags">
+        <span class="project-tag" contenteditable="false">HTML5<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">JavaScript<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">ISO 27001<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">GitHub Pages<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-number" contenteditable="false">02</div>
+      <div class="project-title" contenteditable="false">Digital Forensics Investigation</div>
+      <div class="project-desc" contenteditable="false">Full forensic investigation of TechVault Securities Inc. for financial fraud and insider threats. Included Kali Linux lab work, FTK Imager analysis, and a comprehensive forensic report.</div>
+      <div class="project-tags">
+        <span class="project-tag" contenteditable="false">Kali Linux<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">FTK Imager<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">Digital Forensics<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-number" contenteditable="false">03</div>
+      <div class="project-title" contenteditable="false">Penetration Testing Lab</div>
+      <div class="project-desc" contenteditable="false">Ethical hacking assessment of a simulated healthcare organisation. Covered social engineering, legal frameworks (CMA 1990, UK GDPR), and Metasploitable environment exploitation.</div>
+      <div class="project-tags">
+        <span class="project-tag" contenteditable="false">Metasploit<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">Ethical Hacking<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">CMA 1990<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-number" contenteditable="false">04</div>
+      <div class="project-title" contenteditable="false">Information Governance Policy</div>
+      <div class="project-desc" contenteditable="false">Comprehensive IG policy document for a fictional company (TechNova AI Solutions), covering data protection, GDPR compliance, and information security governance with Harvard-referenced academic sources.</div>
+      <div class="project-tags">
+        <span class="project-tag" contenteditable="false">UK GDPR<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">Policy Writing<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+        <span class="project-tag" contenteditable="false">Governance<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+    </div>
+
+  </div>
+  <button class="add-project-btn" onclick="addProject()">+ Add Project</button>
+</section>
+
+<!-- Education -->
+<section id="education">
+  <p class="section-label">Background</p>
+  <h2 class="section-title">Education</h2>
+  <div class="edu-timeline" id="edu-timeline">
+
+    <div class="edu-item">
+      <div class="edu-year" contenteditable="false">2024 — Present</div>
+      <div class="edu-degree" contenteditable="false">BSc (Hons) Computing</div>
+      <div class="edu-school" contenteditable="false">Northumbria University — QAHE London Campus</div>
+      <div class="edu-detail" contenteditable="false">Final year focus on cybersecurity, digital forensics, and information governance. Dissertation: ISO 27001:2022 Risk Assessment Tool. Student ID: 24028268.</div>
+    </div>
+
+    <div class="edu-item">
+      <div class="edu-year" contenteditable="false">Add Year</div>
+      <div class="edu-degree" contenteditable="false">Your Previous Qualification</div>
+      <div class="edu-school" contenteditable="false">Institution Name</div>
+      <div class="edu-detail" contenteditable="false">Brief description of your studies, achievements, or relevant modules.</div>
+    </div>
+
+  </div>
+  <button class="add-edu-btn" onclick="addEdu()">+ Add Education</button>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div class="contact-inner">
+    <div>
+      <p class="section-label">Get In Touch</p>
+      <h2 class="contact-tagline" contenteditable="false">Let's build something together.</h2>
+      <p class="contact-sub" contenteditable="false">Open to graduate roles, internships, and freelance cybersecurity projects. Feel free to reach out.</p>
+      <a href="#" class="btn-primary">Send a Message</a>
+    </div>
+    <div class="contact-links">
+      <a class="contact-link" href="#">
+        <span class="contact-link-icon">✉</span>
+        <span contenteditable="false">your.email@example.com</span>
+      </a>
+      <a class="contact-link" href="#">
+        <span class="contact-link-icon">in</span>
+        <span contenteditable="false">linkedin.com/in/yourprofile</span>
+      </a>
+      <a class="contact-link" href="#">
+        <span class="contact-link-icon">gh</span>
+        <span contenteditable="false">github.com/yourusername</span>
+      </a>
+      <a class="contact-link" href="#">
+        <span class="contact-link-icon">📍</span>
+        <span contenteditable="false">London, United Kingdom</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span contenteditable="false">© 2025 Glen Akhil — All rights reserved</span>
+</footer>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <button class="tool-btn" id="save-btn" onclick="savePage()">💾 SAVE HTML</button>
+  <button class="tool-btn" id="toggle-edit" onclick="toggleEdit()">✏ EDIT MODE</button>
+</div>
+
+<script>
+  let editMode = false;
+
+  function toggleEdit() {
+    editMode = !editMode;
+    const btn = document.getElementById('toggle-edit');
+    const banner = document.getElementById('edit-banner');
+    const saveBtn = document.getElementById('save-btn');
+    const editables = document.querySelectorAll('[contenteditable]');
+
+    if (editMode) {
+      btn.textContent = '✓ DONE EDITING';
+      btn.classList.add('editing');
+      banner.classList.add('active');
+      saveBtn.classList.add('visible');
+      editables.forEach(el => {
+        if (el.tagName !== 'NAV' && el.id !== 'edit-banner') {
+          el.setAttribute('contenteditable', 'true');
+        }
+      });
+      document.body.classList.add('edit-mode');
+    } else {
+      btn.textContent = '✏ EDIT MODE';
+      btn.classList.remove('editing');
+      banner.classList.remove('active');
+      editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+      document.body.classList.remove('edit-mode');
+    }
+  }
+
+  function addSkill(listId) {
+    const name = prompt('Enter skill name:');
+    if (!name) return;
+    const list = document.getElementById(listId);
+    const tag = document.createElement('span');
+    tag.className = 'skill-tag';
+    tag.setAttribute('contenteditable', 'true');
+    tag.innerHTML = name + '<button class="del-btn" onclick="this.parentElement.remove()">✕</button>';
+    list.appendChild(tag);
+  }
+
+  function addProject() {
+    const grid = document.getElementById('projects-grid');
+    const count = grid.querySelectorAll('.project-card').length + 1;
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.innerHTML = `
+      <div class="project-number" contenteditable="true">0${count}</div>
+      <div class="project-title" contenteditable="true">New Project Title</div>
+      <div class="project-desc" contenteditable="true">Describe what this project is about, the problem it solved, and the technologies used.</div>
+      <div class="project-tags">
+        <span class="project-tag" contenteditable="true">Tag<button class="del-btn" onclick="this.parentElement.remove()">✕</button></span>
+      </div>
+      <button class="add-btn" onclick="addTag(this)">+ Add Tag</button>
+      <br><button class="del-btn" style="display:inline-block;margin-top:12px" onclick="this.closest('.project-card').remove()">✕ Remove Card</button>
+    `;
+    grid.appendChild(card);
+  }
+
+  function addEdu() {
+    const timeline = document.getElementById('edu-timeline');
+    const item = document.createElement('div');
+    item.className = 'edu-item';
+    item.innerHTML = `
+      <div class="edu-year" contenteditable="true">Year</div>
+      <div class="edu-degree" contenteditable="true">Degree / Qualification</div>
+      <div class="edu-school" contenteditable="true">Institution</div>
+      <div class="edu-detail" contenteditable="true">Description of your studies.</div>
+      <button class="del-btn" style="display:inline-block;margin-top:8px" onclick="this.closest('.edu-item').remove()">✕ Remove</button>
+    `;
+    timeline.appendChild(item);
+  }
+
+  function savePage() {
+    // Remove toolbar and banner before saving
+    const toolbar = document.getElementById('toolbar');
+    const banner = document.getElementById('edit-banner');
+    const toolbarClone = toolbar.cloneNode(true);
+    const bannerClone = banner.cloneNode(true);
+
+    // Turn off edit mode markers
+    document.body.classList.remove('edit-mode');
+    document.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
+    banner.classList.remove('active');
+
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+    // Restore
+    document.body.classList.add('edit-mode');
+    document.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'true'));
+    banner.classList.add('active');
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'portfolio.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
